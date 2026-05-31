@@ -28,7 +28,7 @@ DaVinci Resolve Free su Linux non supporta nativamente molti codec comuni (H.265
 Il flusso di lavoro tipico è:
 
 ```
-File originale (H.265/VP9/AV1/ecc.)
+File originale (H.264, H.265, VP9, AV1, MKV, ecc.)
         ↓  Script 1
   DNxHR/MOV  ← importa in DaVinci Resolve Free
         ↓  esporta da Resolve
@@ -43,20 +43,27 @@ File originale (H.265/VP9/AV1/ecc.)
 
 ### Perché DNxHR e non AV1 (o altri codec)
 
-| Codec | Editing in Resolve Free | Dimensione file | Velocità decode |
-|-------|------------------------|-----------------|-----------------|
-| **DNxHR HQ** | ✅ Nativo, perfetto | Grande | Istantanea |
-| H.264 HQ | ✅ Supportato | Medio | Buona |
-| H.265/HEVC | ⚠️ Non supportato in Free | Piccolo | Lenta |
+| Codec | Editing in Resolve Free su Linux | Dimensione file | Velocità decode |
+|-------|----------------------------------|-----------------|-----------------|
+| **DNxHR HQ** | ✅ Nativo, affidabile al 100% | Grande | Istantanea |
+| H.264 | ⚠️ Inaffidabile — vedi nota | Medio | Lenta (inter-frame) |
+| H.265/HEVC | ❌ Non supportato in Free | Piccolo | Molto lenta |
 | AV1 | ❌ Non supportato | Minimo | Molto lenta |
 | VP9 | ❌ Non supportato | Piccolo | Lenta |
 | ProRes | ⚠️ Limitato su Linux | Grande | Istantanea |
+
+> **Nota su H.264:** DaVinci Resolve Free su Linux dichiara il supporto H.264, ma in pratica è inaffidabile:
+> - Usa il decoder hardware GPU: senza driver corretti (o su GPU non supportata) l'importazione fallisce anche con file H.264 normalissimi
+> - I profili "non standard" non funzionano: Hi10P (10-bit), High 4:2:2, alcuni profili da mirrorless/action cam → errore di importazione
+> - Anche quando funziona, H.264 è un codec inter-frame con compressione pesante: seeking lento, frame drop durante il playback nella timeline, crash sui tagli precisi
+>
+> In sintesi: H.264 potrebbe aprirsi, oppure no. DNxHR funziona sempre.
 
 **DNxHR** è un codec *intra-frame*: ogni fotogramma è codificato in modo indipendente, senza riferimenti ai fotogrammi precedenti o successivi. Questo significa:
 
 - **Seeking istantaneo** durante il montaggio (vai a qualsiasi punto del video senza aspettare)
 - **Nessun artefatto** da decompressione inter-frame durante i tagli
-- **Compatibilità totale** con DaVinci Resolve Free su Linux
+- **Compatibilità garantita** con DaVinci Resolve Free su Linux, indipendentemente dai driver GPU
 - **Qualità di editing** professionale (usato nelle produzioni broadcast)
 
 **AV1** è ottimo per la distribuzione/streaming ma è il peggior formato possibile per l'editing:
