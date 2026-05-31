@@ -87,34 +87,77 @@ File originale (H.264, H.265, VP9, AV1, MKV, ecc.)
 
 ### Obbligatori
 
-| Pacchetto | Uso | Installazione |
-|-----------|-----|---------------|
-| `ffmpeg` | Motore di conversione video | `sudo apt install ffmpeg` |
-| `ffprobe` | Analisi metadati video (incluso in ffmpeg) | (incluso in ffmpeg) |
-| `zenity` | Interfaccia grafica dialoghi | `sudo apt install zenity` |
+| Pacchetto | Uso |
+|-----------|-----|
+| `ffmpeg` + `ffprobe` | Motore di conversione video |
+| `zenity` | Interfaccia grafica dialoghi |
+
+```bash
+# Ubuntu / Debian / Pop!_OS / Linux Mint
+sudo apt install ffmpeg zenity
+
+# Arch Linux / Manjaro / EndeavourOS / Garuda
+sudo pacman -S ffmpeg zenity
+```
 
 ### Per l'accelerazione hardware (opzionali ma consigliati)
 
 #### Intel QuickSync (QSV) — per laptop/desktop Intel
+
 ```bash
+# Ubuntu / Debian — Intel Gen 8+ (Coffee Lake e successivi)
 sudo apt install intel-media-va-driver-non-free libmfx1
 sudo usermod -aG video $USER
-# Poi esegui logout e login per applicare il gruppo
+
+# Ubuntu / Debian — Intel Gen 6-7 (Skylake, Kaby Lake)
+sudo apt install intel-media-va-driver libmfx1
+sudo usermod -aG video $USER
+
+# Ubuntu / Debian — Intel Gen 5 e precedenti
+sudo apt install i965-va-driver
+sudo usermod -aG video $USER
 ```
 
-> **Nota:** Su sistemi più vecchi (Intel gen. 6 o precedente) usa `i965-va-driver` invece di `intel-media-va-driver-non-free`.
+```bash
+# Arch Linux / Manjaro — Intel Gen 8+ (Coffee Lake e successivi)
+sudo pacman -S intel-media-driver onevpl-intel-gpu
+sudo usermod -aG video $USER
+
+# Arch Linux / Manjaro — Intel Gen 6-7 (Skylake, Kaby Lake)
+sudo pacman -S intel-media-driver onevpl-intel-gpu
+sudo usermod -aG video $USER
+
+# Arch Linux / Manjaro — Intel Gen 5 e precedenti
+sudo pacman -S libva-intel-driver
+sudo usermod -aG video $USER
+```
+
+> Dopo `usermod` esegui **logout e login** per applicare il gruppo.
 
 #### AMD (VAAPI)
+
 ```bash
+# Ubuntu / Debian
 sudo apt install mesa-va-drivers
+sudo usermod -aG video $USER
+
+# Arch Linux / Manjaro
+sudo pacman -S libva-mesa-driver
 sudo usermod -aG video $USER
 ```
 
 #### NVIDIA (NVENC)
+
 ```bash
-# I driver proprietari NVIDIA includono già il supporto NVENC
-# Verifica che ffmpeg sia compilato con --enable-nvenc
+# I driver proprietari NVIDIA includono già il supporto NVENC in entrambe le distro.
+# Verifica che ffmpeg lo veda:
 ffmpeg -hide_banner -encoders | grep nvenc
+
+# Ubuntu / Debian — se i driver non sono installati:
+sudo apt install nvidia-driver-535   # o versione più recente disponibile
+
+# Arch Linux — se i driver non sono installati:
+sudo pacman -S nvidia nvidia-utils   # oppure nvidia-open per GPU RTX 20+
 ```
 
 ---
@@ -128,8 +171,9 @@ ffmpeg -hide_banner -encoders | grep nvenc
 git clone https://github.com/flavio-coding/video-converters.git
 cd video-converters
 
-# Installa le dipendenze
-sudo apt install ffmpeg zenity
+# Installa le dipendenze — scegli la tua distro:
+sudo apt install ffmpeg zenity          # Ubuntu / Debian
+sudo pacman -S ffmpeg zenity            # Arch / Manjaro
 
 # Esegui lo script di installazione
 bash install.sh
@@ -302,16 +346,27 @@ Il rilevamento richiede circa 1-2 secondi e viene mostrato un dialog "Rilevament
 
 QuickSync è l'encoder hardware integrato nei processori Intel dal 2011 in poi. È generalmente il più efficiente in termini di consumo energetico (importante per laptop) e di velocità.
 
-**Requisiti su Ubuntu/Debian:**
 ```bash
-# Intel Gen. 8+ (Coffee Lake e successivi)
+# Ubuntu / Debian — Intel Gen 8+ (Coffee Lake e successivi)
 sudo apt install intel-media-va-driver-non-free libmfx1
 
-# Intel Gen. 6-7 (Skylake, Kaby Lake)
+# Ubuntu / Debian — Intel Gen 6-7 (Skylake, Kaby Lake)
 sudo apt install intel-media-va-driver libmfx1
 
-# Intel Gen. 5 e precedenti
+# Ubuntu / Debian — Intel Gen 5 e precedenti
 sudo apt install i965-va-driver
+```
+
+```bash
+# Arch Linux / Manjaro — Intel Gen 8+ (Coffee Lake e successivi)
+# onevpl-intel-gpu è il successore moderno di libmfx, richiesto da ffmpeg>=6
+sudo pacman -S intel-media-driver onevpl-intel-gpu
+
+# Arch Linux / Manjaro — Intel Gen 6-7 (Skylake, Kaby Lake)
+sudo pacman -S intel-media-driver onevpl-intel-gpu
+
+# Arch Linux / Manjaro — Intel Gen 5 e precedenti
+sudo pacman -S libva-intel-driver
 ```
 
 **Verifica che QSV funzioni:**
@@ -333,6 +388,10 @@ ls /dev/dri/
 
 **Verifica encoder VAAPI:**
 ```bash
+# Installa vainfo se non presente:
+sudo apt install libva-utils        # Ubuntu / Debian
+sudo pacman -S libva-utils          # Arch / Manjaro
+
 vainfo 2>/dev/null | grep -i "h264\|hevc"
 ```
 
@@ -386,7 +445,12 @@ Se il sottomenu "Script" non compare, assicurati che Nautilus abbia la funzione 
 ### Errore: "ffmpeg non trovato"
 
 ```bash
+# Ubuntu / Debian
 sudo apt update && sudo apt install ffmpeg
+
+# Arch Linux / Manjaro
+sudo pacman -Syu ffmpeg
+
 # Verifica
 ffmpeg -version
 ```
@@ -395,9 +459,15 @@ ffmpeg -version
 
 ### Intel QuickSync non rilevato
 
-1. Verifica che i driver siano installati:
+1. Installa i driver per la tua generazione Intel:
    ```bash
-   sudo apt install intel-media-va-driver-non-free libmfx1
+   # Ubuntu / Debian
+   sudo apt install intel-media-va-driver-non-free libmfx1   # Gen 8+
+   sudo apt install i965-va-driver                            # Gen 5 e precedenti
+
+   # Arch Linux / Manjaro
+   sudo pacman -S intel-media-driver onevpl-intel-gpu         # Gen 8+
+   sudo pacman -S libva-intel-driver                          # Gen 5 e precedenti
    ```
 
 2. Verifica che il tuo utente sia nel gruppo `video`:
@@ -408,13 +478,13 @@ ffmpeg -version
    # Poi esegui logout e login
    ```
 
-3. Verifica che il modulo kernel sia caricato:
+3. Verifica che il dispositivo DRI sia presente:
    ```bash
    ls /dev/dri/
    # Deve mostrare renderD128 o simile
    ```
 
-4. Test diretto:
+4. Test diretto con log verboso:
    ```bash
    ffmpeg -hide_banner -loglevel verbose \
        -f lavfi -i "color=size=160x120:duration=0.1:rate=25" \
@@ -425,24 +495,24 @@ ffmpeg -version
 
 ### La conversione DNxHR fallisce con errori di pixel format
 
-Se vedi errori tipo `Could not find a supported codec for profile dnxhr_hq`, verifica la versione di ffmpeg:
+Se vedi errori tipo `Could not find a supported codec for profile dnxhr_hq`, verifica la versione di ffmpeg (richiesta: 4.4+):
 ```bash
 ffmpeg -version | head -1
-# Consigliata: 4.4 o superiore
 ```
 
-Con ffmpeg vecchio, prova ad aggiornare:
+Su Ubuntu/Debian con una versione vecchia, aggiorna tramite PPA:
 ```bash
-# Ubuntu: usa il PPA ufficiale per una versione più recente
 sudo add-apt-repository ppa:savoury1/ffmpeg4
 sudo apt update && sudo apt install ffmpeg
 ```
+
+Su Arch Linux questo problema non si presenta: i pacchetti sono sempre aggiornati all'ultima versione stabile di ffmpeg.
 
 ---
 
 ### File di output con dimensioni zero o corrotti
 
-Questo indica che ffmpeg ha fallito silenziosamente. Per diagnosticare, esegui manualmente il comando ffmpeg corrispondente:
+Questo indica che ffmpeg ha fallito silenziosamente. Per diagnosticare, esegui manualmente:
 
 ```bash
 # Test DNxHR manuale
@@ -467,17 +537,17 @@ La barra di avanzamento si aggiorna ogni 0.4 secondi leggendo il file di progres
 
 ### Dipendenza da zenity non disponibile (es. KDE/XFCE)
 
-`zenity` è specifico per GTK/GNOME. Su altri ambienti desktop:
+`zenity` è un'applicazione GTK ma funziona su qualsiasi ambiente desktop purché GTK sia installato (quasi sempre già presente):
 
 ```bash
-# KDE: usa kdialog (richiede modifica degli script)
-sudo apt install kdialog
+# Ubuntu / Debian
+sudo apt install zenity
 
-# Alternativa universale
-sudo apt install zenity  # funziona anche fuori GNOME
+# Arch Linux / Manjaro
+sudo pacman -S zenity
 ```
 
-Gli script usano `zenity` che funziona su qualsiasi ambiente purché GTK sia installato (di solito è già presente su tutti i sistemi Linux desktop).
+Se preferisci `kdialog` nativo su KDE, gli script richiederebbero modifica manuale (sostituzione delle chiamate `zenity` con l'equivalente `kdialog`).
 
 ---
 
